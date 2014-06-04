@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{83A39669-B15F-4A4D-BA5C-30D2BCDB63C4}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>coold</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)D</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)R</TargetName>
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;COOLD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PostBuildEvent>
+      <Command>post_build_eventD.bat</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;COOLD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>false</TreatWarningAsError>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <PostBuildEvent>
+      <Command>post_build_eventR.bat</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Console\CoolD_Command.h" />
+    <ClInclude Include="Console\CoolD_ConsoleManager.h" />
+    <ClInclude Include="coold.h" />
+    <ClInclude Include="Render\CoolD_RenderModule.h" />
+    <ClInclude Include="Data\CoolD_Defines.h" />
+    <ClInclude Include="Data\CoolD_Inlines.h" />
+    <ClInclude Include="Math\CoolD_Math.h" />
+    <ClInclude Include="Math\CoolD_Matrix33.h" />
+    <ClInclude Include="Math\CoolD_Matrix44.h" />
+    <ClInclude Include="Data\CoolD_Struct.h" />
+    <ClInclude Include="Render\CoolD_CustomMesh.h" />
+    <ClInclude Include="Data\CoolD_Singleton.h" />
+    <ClInclude Include="Render\CoolD_Transform.h" />
+    <ClInclude Include="Data\CoolD_Type.h" />
+    <ClInclude Include="Math\CoolD_Vector2.h" />
+    <ClInclude Include="Math\CoolD_Vector3.h" />
+    <ClInclude Include="Math\CoolD_Vector4.h" />
+    <ClInclude Include="Render\CoolD_MeshManager.h" />
+    <ClInclude Include="Thread\CoolD_Thread.h" />
+    <ClInclude Include="Thread\CoolD_ThreadManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Console\CoolD_Command.cpp" />
+    <ClCompile Include="Console\CoolD_ConsoleManager.cpp" />
+    <ClCompile Include="coold.cpp" />
+    <ClCompile Include="Render\CoolD_RenderModule.cpp" />
+    <ClCompile Include="Render\CoolD_CustomMesh.cpp" />
+    <ClCompile Include="Math\CoolD_Math.cpp" />
+    <ClCompile Include="Math\CoolD_Matrix33.cpp" />
+    <ClCompile Include="Math\CoolD_Matrix44.cpp" />
+    <ClCompile Include="Render\CoolD_Transform.cpp" />
+    <ClCompile Include="Math\CoolD_Vector2.cpp" />
+    <ClCompile Include="Math\CoolD_Vector3.cpp" />
+    <ClCompile Include="Math\CoolD_Vector4.cpp" />
+    <ClCompile Include="Render\CoolD_MeshManager.cpp" />
+    <ClCompile Include="Thread\CoolD_Thread.cpp" />
+    <ClCompile Include="Thread\CoolD_ThreadManager.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

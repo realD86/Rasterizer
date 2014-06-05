@@ -8,7 +8,7 @@
 namespace CoolD
 {
 	RenderModule::RenderModule()
-		: m_Buffer(nullptr), m_CullMode(BSCullType::CCW), 
+		: m_Buffer(nullptr), m_CullMode(BSCullType::CCW),
 		m_pMesh(nullptr), m_pDepthBuffer(nullptr)
 	{			
 		m_vecLine.resize(100);
@@ -44,8 +44,8 @@ namespace CoolD
 		m_pDepthBuffer->ClearDepthBuffer(m_Height, m_Width);
 	}
 
-	Dvoid RenderModule::RenderBegin(CustomMesh* pMesh)
-	{		
+	Dvoid RenderModule::RenderBegin(CustomMesh* pMesh )
+	{			
 		if( pMesh == nullptr )
 		{
 			LOG("Mesh is Null");
@@ -58,10 +58,10 @@ namespace CoolD
 		{
 			m_trasnformVertex.resize(m_pMesh->GetVertexSize());
 		}		
-
+		
 		AdjustTransform();
 		Render();
-	}
+	}	
 
 	Dvoid RenderModule::RenderEnd()
 	{
@@ -69,6 +69,7 @@ namespace CoolD
 		m_pMesh = nullptr;
 	}
 
+	
 	Dvoid RenderModule::AdjustTransform()
 	{
 		if( m_pMesh == nullptr )
@@ -78,7 +79,6 @@ namespace CoolD
 		{
 			m_trasnformVertex = (*m_pMesh->GetVectorVertex());
 		}
-
 		else if( m_pMesh->GetType() == PLY )
 		{
 			for( Duint i = 1; i <= m_pMesh->GetVertexSize(); ++i )
@@ -91,6 +91,33 @@ namespace CoolD
 		{	//타입지정이 안 되어있음 무조건 실패
 			assert(false);
 		}
+	}
+
+	Dvoid RenderModule::AdjustGridWorld(Dint gridCount, Dint sequence)
+	{		
+		if (gridCount <= 0)
+			assert(false);
+
+		const Dfloat gridWidth = gridCount * 2.5f + 2.5f;
+		const Dfloat gridHeight = gridCount * 2.5f + 2.5f;
+
+		Dint grid_x_LineCount = gridCount;
+		Dint grid_y_LineCount = gridCount;
+
+		Dfloat x_interval = gridWidth / grid_x_LineCount;
+		Dfloat y_interval = gridHeight / grid_y_LineCount;
+				
+		Dint x = sequence % grid_x_LineCount;
+		Dint y = sequence / grid_x_LineCount;
+
+		Dfloat xPos = ((x * x_interval) + (x_interval / 2)) * 2;
+		Dfloat yPos = ((y * y_interval) + (y_interval / 2)) * 2;
+
+		xPos -= (gridWidth);
+		yPos -= (gridHeight);
+		
+		m_arrayTransform[WORLD][12] = xPos;
+		m_arrayTransform[WORLD][13] = yPos;		
 	}
 
 	static VariableCommand cc_use_frustumcull("cc_use_frustumcull", "1");
@@ -301,7 +328,7 @@ namespace CoolD
 	Dbool RenderModule::FrustumCulling(const BaseFace& currentface)
 	{			
 		Duint faceSize = currentface.vecIndex.size();
-		Dbool isCulling = false;
+		Dbool isCulling = true;
 
 		Dfloat boundary = 1.0f + cc_frustum_bias.Float();
 
@@ -310,16 +337,12 @@ namespace CoolD
 			Dint index = currentface.vecIndex[ i ];
 			Vector3 Vertex = m_trasnformVertex[ index - 1 ];
 
-			if( Vertex.x < -boundary || boundary < Vertex.x ||
-				Vertex.y < -boundary || boundary < Vertex.y ||
-				Vertex.z < -boundary || boundary < Vertex.z )
-			{	//시야 범위를 넘어감 즉, 제외 됨
-				isCulling = true;
-			}
-			else
-			{
+			if (-boundary <= Vertex.x && Vertex.x <= boundary &&
+				-boundary <= Vertex.y && Vertex.y <= boundary &&
+				-boundary <= Vertex.z && Vertex.z <= boundary)
+			{	//정점 중 한개라도 시야 범위내에 있으면 해당 페이스 렌더링 됨
 				isCulling = false;
-			}
+			}			
 		}
 
 		return isCulling;
@@ -460,7 +483,7 @@ namespace CoolD
 
 		vecLine.emplace_back(lineKey, beginVertex, endVertex);
 	}		
-	
+
 	//------------------------------------------------------------------------------------------------
 
 	DepthBuffer::DepthBuffer()

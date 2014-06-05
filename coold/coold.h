@@ -20,3 +20,5 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_SetTransform(Dint transformType, const D
 EXTERN_FORM DLL_API Dvoid __cdecl coold_SetViewFactor(Dfloat* eye, Dfloat* lookat, Dfloat* up);
 EXTERN_FORM DLL_API Dvoid __cdecl coold_SetPerspectiveFactor(Dfloat fovY, Dfloat aspect, Dfloat zn, Dfloat zf);
 EXTERN_FORM DLL_API Dvoid __cdecl coold_DetachModuleClear();
+EXTERN_FORM DLL_API Dvoid __cdecl coold_CreateCamera(Dfloat* eye, Dfloat* lookat, Dfloat angle, Dfloat aspect);
+EXTERN_FORM DLL_API Dvoid __cdecl coold_UpdateCamera(Dint x, Dint y, Dint clickState, Dbool front, Dbool back, Dbool left, Dbool right, Dbool up, Dbool down);

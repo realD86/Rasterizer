@@ -66,5 +66,5 @@ namespace CoolD
 
 	private:
 		Func_void_initList m_Func;
-	};
+	};	
 };

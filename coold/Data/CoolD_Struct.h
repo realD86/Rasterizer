@@ -121,6 +121,22 @@ struct ActiveLine
 		:height(_height), currentLine(_currentLine)	{}
 };
 
+struct Point
+{
+	Dlong  x;
+	Dlong  y;
+};
+
+struct MoveKey
+{
+	Dbool front;
+	Dbool back;
+	Dbool left;
+	Dbool right;
+	Dbool up;
+	Dbool down;
+};
+
 template <typename T>
 class RandomGenerator
 { //mt19937

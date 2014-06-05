@@ -13,7 +13,7 @@ namespace CoolD
 	class DepthBuffer;
 	class RenderModule final	//상속 받을일은 없을 듯
 	{
-	private:
+	private:		
 		Duchar* m_Buffer;	//프레임 버퍼
 		DepthBuffer* m_pDepthBuffer;
 		Dint m_Width;
@@ -30,15 +30,16 @@ namespace CoolD
 		CustomMesh* m_pMesh;		
 
 	public:
-		RenderModule();		
+		RenderModule();
 		~RenderModule();
 				
 	public:
-		Dvoid RenderBegin(CustomMesh* pMesh);
+		Dvoid AdjustGridWorld(Dint gridCount, Dint sequence);
+		Dvoid RenderBegin(CustomMesh* pMesh);		
 		Dvoid RenderEnd();
 		
 	private:
-		Dvoid AdjustTransform();
+		Dvoid AdjustTransform();		
 		Dvoid Render();
 
 	public:
@@ -97,7 +98,7 @@ namespace CoolD
 
 	private:		
 		Dint	m_width;
-		Dfloat* m_DepthBuffer;	//깊이 버퍼
+		Dfloat* m_DepthBuffer;	//깊이 버퍼		
 	};
 }
 

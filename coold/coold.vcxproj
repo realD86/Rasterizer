@@ -91,6 +91,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Camera\CoolD_Camera.h" />
     <ClInclude Include="Console\CoolD_Command.h" />
     <ClInclude Include="Console\CoolD_ConsoleManager.h" />
     <ClInclude Include="coold.h" />
@@ -113,6 +114,7 @@
     <ClInclude Include="Thread\CoolD_ThreadManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera\CoolD_Camera.cpp" />
     <ClCompile Include="Console\CoolD_Command.cpp" />
     <ClCompile Include="Console\CoolD_ConsoleManager.cpp" />
     <ClCompile Include="coold.cpp" />

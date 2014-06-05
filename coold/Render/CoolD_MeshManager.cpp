@@ -60,12 +60,12 @@ namespace CoolD
 	}
 
 	Dvoid MeshManager::Clear()
-	{
+	{		
 		Safe_Delete_Map(m_mapMesh);		
 	}
 
 	const map<string, CustomMesh*>& MeshManager::GetMapMesh()
-	{
+	{	
 		return m_mapMesh;
 	}		
 };

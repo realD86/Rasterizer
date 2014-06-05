@@ -40,7 +40,7 @@ namespace CoolD
 	{
 		Lock lock(&m_sContainerLock);
 		for( ; ; )
-		{			
+		{	
 			for( auto thread : m_vecThreadPool )
 			{
 				if( thread->GetIsFree() == true )
@@ -51,6 +51,7 @@ namespace CoolD
 					return;
 				}
 			}
+			Sleep(0);
 		}
 	}	
 	

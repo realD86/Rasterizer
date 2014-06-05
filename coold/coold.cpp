@@ -14,6 +14,7 @@
 #include "Console\CoolD_Command.h"
 #include "Console\CoolD_ConsoleManager.h"
 #include "Thread\CoolD_ThreadManager.h"
+#include "Camera\\CoolD_Camera.h"
 
 #pragma warning(disable: 4100)
 
@@ -22,6 +23,9 @@ using namespace CoolD;
 Matrix44 g_matWorld;
 Matrix44 g_matView;
 Matrix44 g_matPers;
+
+Dint g_gridCount = 1;
+Dbool g_threadUse = false;
 
 //Dbool WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID fImpLoad)
 //{
@@ -45,14 +49,14 @@ static FunctionCommand ShowCommand("show_command", [] (initializer_list<string> 
 });
 
 auto g_renderModule = new RenderModule();
-static VariableCommand cc_mesh_copy("cc_mesh_copy", "0");
-EXTERN_FORM DLL_API Dvoid __cdecl coold_LoadMeshFromFile( const Dchar* filename )
-{
-	GETSINGLE(MeshManager).Clear();		
-	GETSINGLE(MeshManager).LoadMesh(filename);	
 
-	//쓰레드 테스트를 위한 추가 로직----------------------------------
-	for (Dint i = 0; i < cc_mesh_copy.Integer(); ++i)
+EXTERN_FORM DLL_API Dvoid __cdecl coold_LoadMeshFromFile( const Dchar* filename )
+{		
+	GETSINGLE(MeshManager).Clear();	
+	GETSINGLE(MeshManager).LoadMesh(filename);
+
+	//쓰레드 테스트를 위한 추가 로직----------------------------------	
+	for (Dint i = 0; i < g_gridCount * g_gridCount - 1; ++i)
 	{
 		CustomMesh* pMesh = GETSINGLE(MeshManager).GetMesh(filename);
 		if (CustomMeshPLY* pPlyMesh = dynamic_cast<CustomMeshPLY*>(pMesh))
@@ -64,32 +68,50 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_LoadMeshFromFile( const Dchar* filename 
 	//-----------------------------------------------------------
 }
 
-Dbool	g_threadUse = true;
+
 ThreadManager* g_pThreadManager = &GETSINGLE(ThreadManager);
 EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width, Dint height, Dint bpp)
-{	
+{
 	g_renderModule->SetScreenInfo(buffer, width, height);
 	g_renderModule->ClearColorBuffer(BLACK);
 	g_renderModule->SetTransform(WORLD, g_matWorld);
 	g_renderModule->SetTransform(VIEW, g_matView);
 	g_renderModule->SetTransform(PERSPECTIVE, g_matPers);
 	g_renderModule->SetTransform(VIEWPORT, TransformHelper::CreateViewport(0, 0, width, height));
-
-	for( auto& Mesh : GETSINGLE(MeshManager).GetMapMesh() )
+		
+	int sequence = 0;
+	for (auto& Mesh : GETSINGLE(MeshManager).GetMapMesh())
 	{
 		if( g_threadUse )
 		{
+			if (g_gridCount > 1)
+			{
+				g_renderModule->AdjustGridWorld(g_gridCount, sequence++);
+			}
 			RenderInfoParam param( g_renderModule, Mesh.second );
 			g_pThreadManager->AssignWork(&param);
 		}
 		else
 		{
+			if (g_gridCount > 1)
+			{
+				g_renderModule->AdjustGridWorld(g_gridCount, sequence++);
+			}
 			g_renderModule->RenderBegin(Mesh.second);
 			g_renderModule->RenderEnd();
 		}
 	}
 	
 	g_pThreadManager->WaitAllThreadWorking();
+
+	//───────────────────────────────────────────────────────────────────────────────────
+	//이 부분은 시리얼하기 때문에 메쉬를 삭제, 생성해도 동작에 무리가 없다.
+	if (g_gridCount * g_gridCount != (signed)GETSINGLE(MeshManager).GetMapMesh().size())
+	{
+		string strFileName((*GETSINGLE(MeshManager).GetMapMesh().begin()).first);
+		coold_LoadMeshFromFile(strFileName.c_str());
+	}
+	//───────────────────────────────────────────────────────────────────────────────────
 }
 
 static VariableCommand cc_x_move("cc_x_move", "0");
@@ -105,12 +127,9 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_SetTransform(Dint transformType, const D
 			g_matWorld = matWorld.Transpose();
 
 			//원점 기준으로 이동
-			if( cc_x_move.Bool() || cc_y_move.Bool() || cc_z_move.Bool() )
-			{
-				g_matWorld[ 12 ] = cc_x_move.Float();
-				g_matWorld[ 13 ] = cc_y_move.Float();
-				g_matWorld[ 14 ] = cc_z_move.Float();
-			}					
+			if (cc_x_move.Bool())	g_matWorld[12] = cc_x_move.Float();
+			if (cc_y_move.Bool())	g_matWorld[13] = cc_y_move.Float();
+			if (cc_z_move.Bool())	g_matWorld[14] = cc_z_move.Float();								
 		}
 		break;
 	default:
@@ -118,16 +137,29 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_SetTransform(Dint transformType, const D
 	}
 }
 
+static VariableCommand cc_use_camera("cc_use_camera", "1");
+static VariableCommand cc_x_eye("cc_x_eye", "0");
+static VariableCommand cc_y_eye("cc_y_eye", "0");
+static VariableCommand cc_z_eye("cc_z_eye", "0");
 EXTERN_FORM DLL_API Dvoid __cdecl coold_SetViewFactor(Dfloat* eye, Dfloat* lookat, Dfloat* up)
-{			
-	g_matView = TransformHelper::CreateView(Vector3(eye), Vector3(lookat), Vector3(up));
+{
+	//시점 이동
+	if (!cc_use_camera.Bool())
+	{
+		if (cc_x_eye.Bool()) eye[0] += cc_x_eye.Float();
+		if (cc_y_eye.Bool()) eye[1] += cc_y_eye.Float();
+		if (cc_z_eye.Bool()) eye[2] += cc_z_eye.Float();
+
+		g_matView = TransformHelper::CreateView(Vector3(eye), Vector3(lookat), Vector3(up));
+	}
 }
 
 static VariableCommand cc_adjust_zn("cc_adjust_zn", "0");
 static VariableCommand cc_adjust_zf("cc_adjust_zf", "0");
 EXTERN_FORM DLL_API Dvoid __cdecl coold_SetPerspectiveFactor(Dfloat fovY, Dfloat aspect, Dfloat zn, Dfloat zf)
 {	
-	g_matPers = TransformHelper::CreatePerspective(kPI / fovY, aspect, zn + cc_adjust_zn.Float(), zf + cc_adjust_zf.Float());
+	if ( !cc_use_camera.Bool() )
+		g_matPers = TransformHelper::CreatePerspective(kPI / fovY, aspect, zn + cc_adjust_zn.Float(), zf + cc_adjust_zf.Float());
 }
 								  
 EXTERN_FORM DLL_API Dvoid __cdecl coold_ExecuteCommand(const Dchar* cmd)
@@ -138,6 +170,20 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_ExecuteCommand(const Dchar* cmd)
 EXTERN_FORM DLL_API Dvoid __cdecl coold_DetachModuleClear()
 {
 	GETSINGLE(ThreadManager).CleanThreads();
+}
+
+EXTERN_FORM DLL_API Dvoid __cdecl coold_CreateCamera(Dfloat* eye, Dfloat* lookat, Dfloat angle, Dfloat aspect)
+{	
+	GETSINGLE(Camera).CreateCamera(eye, lookat, angle, aspect);		
+}
+
+EXTERN_FORM DLL_API Dvoid __cdecl coold_UpdateCamera(Dint x, Dint y, Dint clickState, Dbool front, Dbool back, Dbool left, Dbool right, Dbool up, Dbool down)
+{	
+	if (cc_use_camera.Bool())
+	{		
+		MoveKey moveKey = { front, back, left, right, up, down };
+		GETSINGLE(Camera).UpdateCamera(x, y, clickState, moveKey, g_matView, g_matPers);
+	}
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------
@@ -175,5 +221,19 @@ static FunctionCommand fc_thread_use("fc_thread_use", [] (initializer_list<strin
 			GETSINGLE(ThreadManager).ResetThreads(0);
 			g_threadUse = isUse;
 		}		
+	}
+});
+
+static FunctionCommand fc_change_grid("fc_change_grid", [](initializer_list<string> strs)
+{
+	if (strs.size() == 1)
+	{		
+		g_gridCount = stoi(*strs.begin());
+
+		VariableCommand* pZf = dynamic_cast<VariableCommand*>( GETSINGLE(ConsoleManager).FindCommand("cc_adjust_zf") );
+		pZf->SetValue( g_gridCount * 8.0f );
+
+		VariableCommand* pZeye = dynamic_cast<VariableCommand*>(GETSINGLE(ConsoleManager).FindCommand("cc_z_eye"));
+		pZeye->SetValue( -(g_gridCount * 8.0f) );		
 	}
 });

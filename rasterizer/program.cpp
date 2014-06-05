@@ -33,6 +33,17 @@ byte g_pppScreenImage[SCREEN_HEIGHT][SCREEN_WIDTH][COLOR_DEPTH];
 //
 static bool g_bFrameUpdate = true;
 static bool g_bNoRetransform = false;
+
+static int g_mouseX = 0;
+static int g_mouseY = 0;
+static int g_clickState = -1;
+static bool g_bFrontKeyDown = false;
+static bool g_bBackKeyDown = false;
+static bool g_bLeftKeyDown = false;
+static bool g_bRightKeyDown = false;
+static bool g_bUpKeyDown = false;
+static bool g_bDownKeyDown = false;
+
 static GLdouble g_dZoomFactor = 4.0;
 static GLint g_iHeight;
 std::string g_meshFileName = "cube.ply";
@@ -101,13 +112,15 @@ namespace
 	};
 	
 
-	typedef void( *FnExecuteCommand )( const char* cmd );
-	typedef void( *FnLoadMeshFromFile )( const char* filename );
+	typedef void( *FnExecuteCommand)( const char* cmd );
+	typedef void( *FnLoadMeshFromFile)( const char* filename );
 	typedef void( *FnRenderToBuffer)( void* buffer, int width, int height, int bpp );
 	typedef void( *FnSetTransform)( int transformType, const float* matrix4x4 );
 	typedef void( *FnSetViewFactor)(float* eye, float* lookat, float* up);
-	typedef void( *FnSetPerspectiveFactor)(float fovY, float aspect, float zn, float zf);
+	typedef void( *FnSetPerspectiveFactor)(float fovY, float aspect, float zn, float zf);	
 	typedef void( *FnDetachModuleClear)();
+	typedef void( *FnCreateCamera)(float* eye, float* lookat, float angle, float aspect);
+	typedef void( *FnUpdateCamera)(int x, int y, int clickState, bool front, bool back, bool left, bool right, bool up, bool down);
 
 
 	// 지정된 모듈로부터 함수 주소 얻어오기
@@ -144,7 +157,9 @@ namespace
 			m_fnSetTransform( nullptr ),
 			m_fnSetViewFactor( nullptr ),
 			m_fnSetPerspectiveFactor( nullptr ),
-			m_fnDetachModuleClear(nullptr)
+			m_fnDetachModuleClear(nullptr),
+			m_fnCreateCamera(nullptr),
+			m_fnUpdateCamera(nullptr)
 		{
 		}
 
@@ -224,6 +239,21 @@ namespace
 			}
 		}
 
+		void CreateCamera(float* eye, float* lookat, float angle, float aspect)
+		{
+			if (m_fnCreateCamera)
+			{
+				m_fnCreateCamera( eye, lookat, angle, aspect );
+			}
+		}
+		void UpdateCamera(int x, int y, int clickState, bool front, bool back, bool left, bool right, bool up, bool down)
+		{
+			if (m_fnUpdateCamera)
+			{
+				m_fnUpdateCamera(x, y, clickState, front, back, left, right, up, down);
+			}
+		}
+
 		void ExecuteCommand( const char* cmd )
 		{
 			if ( m_fnExecuteCommand )
@@ -247,6 +277,8 @@ namespace
 		SETUP_FUNC( SetViewFactor );
 		SETUP_FUNC( SetPerspectiveFactor);
 		SETUP_FUNC( DetachModuleClear );
+		SETUP_FUNC( CreateCamera );
+		SETUP_FUNC( UpdateCamera );
 
 	private:
 		void AssignOrReplace( HMODULE h )
@@ -273,6 +305,8 @@ namespace
 			m_fnSetViewFactor = nullptr;
 			m_fnSetPerspectiveFactor = nullptr;
 			m_fnDetachModuleClear = nullptr;
+			m_fnCreateCamera = nullptr;
+			m_fnUpdateCamera = nullptr;
 			FreeLibrary( m_hModule );
 		}
 
@@ -285,6 +319,8 @@ namespace
 		FnSetViewFactor m_fnSetViewFactor;
 		FnSetPerspectiveFactor m_fnSetPerspectiveFactor;
 		FnDetachModuleClear m_fnDetachModuleClear;
+		FnCreateCamera m_fnCreateCamera;
+		FnUpdateCamera m_fnUpdateCamera;
 	};
 
 	ModuleContext g_ModuleContext;
@@ -376,8 +412,19 @@ static void LoadModuleCoolD()
 	g_ModuleContext.InstallFunctionSetTransform( "coold_SetTransform" );
 	g_ModuleContext.InstallFunctionSetViewFactor("coold_SetViewFactor");
 	g_ModuleContext.InstallFunctionSetPerspectiveFactor("coold_SetPerspectiveFactor");
-	g_ModuleContext.InstallFunctionExecuteCommand("coold_ExecuteCommand");
+	g_ModuleContext.InstallFunctionExecuteCommand("coold_ExecuteCommand");	
 	g_ModuleContext.InstallFunctionDetachModuleClear("coold_DetachModuleClear");
+	g_ModuleContext.InstallFunctionCreateCamera("coold_CreateCamera");
+	g_ModuleContext.InstallFunctionUpdateCamera("coold_UpdateCamera");
+
+	float eye[3] = { 1.5f, 3.0f, -15.0f };
+	float lookat[3] = { 0.0f, 0.0f, 0.0f };
+	float up[3] = { 0.0f, 1.0f, 0.0f };
+
+	const float PI = 3.141592654f;
+	float fovY = 4.0f;
+	float aspect = 1.0f;
+	g_ModuleContext.CreateCamera(eye, lookat, PI / fovY, aspect);
 
 	printf( "\n<CoolD>\n\n" );
 }
@@ -416,12 +463,12 @@ void SetupTransform()
 	Vector3 vUpVec( 0.0f, 1.0f, 0.0f );
 	Matrix4 matView;
 	matView.LookAtLH( vEyePt, vLookatPt, vUpVec );
-	g_ModuleContext.SetTransform( TransformType::View, matView.M );
+	g_ModuleContext.SetTransform( TransformType::View, matView.M );	
 
 	//For CoolD-------------------------------------------------------
-	float eye[ 3 ] = { vEyePt.X, vEyePt.Y, vEyePt.Z };	
-	float lookat[ 3 ] = { vLookatPt.X, vLookatPt.Y, vLookatPt.Z };
-	float up[ 3 ] = { vUpVec.X, vUpVec.Y, vUpVec.Z };	
+	float eye[3] = { vEyePt.X, vEyePt.Y, vEyePt.Z };
+	float lookat[3] = { vLookatPt.X, vLookatPt.Y, vLookatPt.Z };
+	float up[3] = { vUpVec.X, vUpVec.Y, vUpVec.Z };
 	g_ModuleContext.SetViewFactor(eye, lookat, up);
 	//---------------------------------------------------------------
 
@@ -442,6 +489,9 @@ void SetupTransform()
 	//For CoolD-------------------------------------------------------
 	g_ModuleContext.SetPerspectiveFactor(fovY, aspect, zn, zf);
 	//----------------------------------------------------------------
+
+	g_ModuleContext.UpdateCamera(g_mouseX, g_mouseY, g_clickState, g_bFrontKeyDown, g_bBackKeyDown, g_bLeftKeyDown, g_bRightKeyDown, g_bUpKeyDown, g_bDownKeyDown);
+	g_bFrontKeyDown = g_bBackKeyDown = g_bLeftKeyDown = g_bRightKeyDown = g_bUpKeyDown = g_bDownKeyDown = false;
 }
 
 void makeCheckImage( void)
@@ -462,7 +512,7 @@ void init( void)
 	glClearColor( 0.0, 0.0, 0.0, 0.0 );
 	glShadeModel( GL_FLAT );
 
-	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );	
 }
 
 void display( void)
@@ -489,16 +539,18 @@ void reshape( int w, int h)
 
 void motion( int x, int y)
 {
-	//printf( "[motion] x: %d, y: %d\n", x, y );
+//	현재 마우스 모든 버튼이 같은 동작 하도록 되어있음
+	//printf( "[motion] x: %d, y: %d\n", x, y );		
+	g_mouseX = x;
+	g_mouseY = y;
+}
 
-	static GLint screeny;
-
-	screeny = g_iHeight -( GLint) y;
-	glRasterPos2i( x, screeny );
-	//glPixelZoom( g_dZoomFactor, g_dZoomFactor );
-	glCopyPixels( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_COLOR );
-	glPixelZoom( 1.0, 1.0 );
-	glFlush();
+void click(int button, int state, int x, int y)
+{
+	//printf("[click] button : %d, state : %d, x: %d, y: %d\n", button, state, x, y);	
+	g_clickState = state;
+	g_mouseX = x;
+	g_mouseY = y;
 }
 
 void ReloadMesh()
@@ -554,9 +606,39 @@ void keyboard( unsigned char key, int x, int y)
 		g_bFrameUpdate = !g_bFrameUpdate;
 		break;
 
+	case 'x':
+	case 'X':
+		g_bNoRetransform = !g_bNoRetransform;
+		break;
+
+	case 'w':
+	case 'W':
+		g_bFrontKeyDown = true;
+		break;
+
 	case 's':
 	case 'S':
-		g_bNoRetransform = !g_bNoRetransform;
+		g_bBackKeyDown = true;
+		break;
+
+	case 'a':
+	case 'A':
+		g_bLeftKeyDown = true;
+		break;
+
+	case 'd':
+	case 'D':
+		g_bRightKeyDown = true;
+		break;
+
+	case 'q':
+	case 'Q':
+		g_bUpKeyDown = true;
+		break;
+
+	case 'e':
+	case 'E':
+		g_bDownKeyDown = true;
 		break;
 
 	case 'z':
@@ -616,7 +698,8 @@ int main( int argc, char** argv)
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );
 	glutKeyboardFunc( keyboard );
-	glutMotionFunc( motion );
+	glutMotionFunc( motion );	
+	glutMouseFunc( click );
 	glutIdleFunc( update );
 
 	// console input text

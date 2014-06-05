@@ -60,7 +60,7 @@ namespace CoolD
 				else
 				{
 					cout << (*paramIter) + " is abandoned" << endl;
-				}				
+				}
 			}
 		}
 		else
@@ -101,5 +101,5 @@ namespace CoolD
 		cout << "\nFunction---------------------------------" << endl;
 		cout << "Name : " << m_Name << endl;
 		cout << "-----------------------------------------" << endl;
-	}
+	}	
 };

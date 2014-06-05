@@ -15,6 +15,9 @@
     <Filter Include="Thread">
       <UniqueIdentifier>{9f3cc74d-d9e9-4153-9957-6674f8f76402}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{ff94c5ce-aa4c-4d72-acc1-c49be3b88900}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coold.h">
@@ -77,6 +80,9 @@
     <ClInclude Include="Render\CoolD_RenderModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Camera\CoolD_Camera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="coold.cpp">
@@ -123,6 +129,9 @@
     </ClCompile>
     <ClCompile Include="Render\CoolD_RenderModule.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CoolD_Camera.cpp">
+      <Filter>Camera</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -65,4 +65,24 @@ enum EventType
 	TYPECOUNT
 };
 
+enum CamDir
+{ 
+	CD_RIGHT, 
+	CD_UP, 
+	CD_FRONT, 
+	CD_MAX 
+};
+enum CamMatrix
+{ 
+	CM_VIEW, 
+	CM_PROJ, 	
+	CM_MAX 
+};
+
+enum ClickStatus
+{	
+	Click,
+	Motion,
+	Release
+};
 using Func_void_initList = void(*)(initializer_list<string>);	//c++11 using syntax

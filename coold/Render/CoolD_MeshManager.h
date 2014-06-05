@@ -31,7 +31,8 @@ namespace CoolD
 		CustomMesh* CreateMeshFromFile(const Dchar* filename);		
 		
 	private:
-		map<string, CustomMesh*>	m_mapMesh;					
+		map<string, CustomMesh*>	m_mapMesh;	
+		mutex						m_mutex;
 	};	
 };
 

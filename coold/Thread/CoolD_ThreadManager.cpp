@@ -42,16 +42,15 @@ namespace CoolD
 		for( ; ; )
 		{	
 			for( auto thread : m_vecThreadPool )
-			{
-				if( thread->GetIsFree() == true )
-				{
-					thread->SetIsFree(false);
+			{				
+				if (thread->CheckEventSignal(WORK) == false)
+				{					
 					thread->SetWorkInfo(info);
 					thread->MakeSignalEvent(WORK);
 					return;
 				}
-			}
-			Sleep(0);
+			}	
+			//Sleep(0);
 		}
 	}	
 	
@@ -73,6 +72,7 @@ namespace CoolD
 					break;
 				}				
 			}
+			//Sleep(0);
 		}
 	}
 
@@ -85,7 +85,6 @@ namespace CoolD
 	Dvoid ThreadManager::CleanThreads()
 	{
 		Lock lock(&m_sContainerLock);
-
 		if( m_vecThreadPool.empty() )
 			return;
 

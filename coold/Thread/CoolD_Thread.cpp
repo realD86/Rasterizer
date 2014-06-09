@@ -6,7 +6,7 @@
 namespace CoolD
 {
 	RenderThread::RenderThread()
-		: m_isFree(true), m_threadID(0), m_handleThread(0)
+		: m_threadID(0), m_handleThread(0), m_pMesh(nullptr)
 	{
 		m_arrHandleWorkEvent[ WORK ] = CreateEvent(nullptr, true, false, nullptr);
 		m_arrHandleWorkEvent[ SHUTDOWN ] = CreateEvent(nullptr, true, false, nullptr);
@@ -53,9 +53,8 @@ namespace CoolD
 	{		
 		m_renderer.RenderBegin(m_pMesh);
 		m_renderer.RenderEnd();
-					
-		m_pMesh = nullptr;	
-		SetIsFree(true);
+							
+		m_pMesh = nullptr;		
 		
 		ResetEvent( m_arrHandleWorkEvent[0] );			
 	}
@@ -82,21 +81,8 @@ namespace CoolD
 		return WaitForSingleObject(m_arrHandleWorkEvent[type], 0) == WAIT_OBJECT_0;
 	}
 
-	Dbool RenderThread::GetIsFree()
-	{
-		return m_isFree;
-	}
-
-	Dvoid RenderThread::SetIsFree(Dbool isFree)
-	{
-		m_isFree = isFree;
-	}
-
 	HANDLE RenderThread::GetThreadHandle() const
 	{
 		return m_handleThread;
 	}
-
-	
-
 }

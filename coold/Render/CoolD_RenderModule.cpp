@@ -9,11 +9,12 @@ namespace CoolD
 {
 	RenderModule::RenderModule()
 		: m_Buffer(nullptr), m_CullMode(BSCullType::CCW),
-		m_pMesh(nullptr), m_pDepthBuffer(nullptr)
+		m_pMesh(nullptr), m_pDepthBuffer(nullptr),
+		m_Width(0), m_Height(0)
 	{			
-		m_vecLine.resize(100);
-		m_edgeTable.resize(100);
-		m_activeTable.resize(100);
+		m_vecLine.resize(10);
+		m_edgeTable.resize(10);
+		m_activeTable.resize(10);		
 	}		
 
 	RenderModule::~RenderModule()
@@ -50,7 +51,7 @@ namespace CoolD
 		{
 			LOG("Mesh is Null");
 			return;
-		}		
+		}
 
 		m_pMesh = pMesh;		
 
@@ -141,7 +142,7 @@ namespace CoolD
 			m_vecLine.clear();
 			m_edgeTable.clear();
 			m_activeTable.clear();
-
+			
 			CreatePointsToLines(pvecFace, faceNum, m_vecLine);
 
 			//backspace culling
@@ -161,8 +162,7 @@ namespace CoolD
 				CreateChainTable(m_vecLine, m_activeTable);
 				DrawFace(m_activeTable, m_edgeTable, MixDotColor( currentFace.color ));
 			}
-		}	
-		
+		}			
 	}
 
 	//-----------------------------------------------------------------------
@@ -253,7 +253,12 @@ namespace CoolD
 					lineIter = vecLine.erase(lineIter);
 				}
 				else
-				{
+				{					
+					if (y < 0)
+					{
+						//printf("y : %d\n", y); printf("biy : %d\n", pLine->beginVertex.y); printf("bmy : %d\n", pLine->endVertex.y);							
+						return;
+					}
 					++lineIter;
 				}
 			} // 현재 라인에 포함가능한 엣지들 모두 포함
@@ -472,9 +477,20 @@ namespace CoolD
 		LineKey lineKey;
 		lineKey.beginIndex = face.vecIndex[ firstIndex ];
 		lineKey.endIndex = face.vecIndex[ secondIndex ];
+		
+		Vector3 beginVertex;
+		Vector3 endVertex;
 
-		Vector3 beginVertex = TransformHelper::TransformViewport(m_arrayTransform, m_trasnformVertex[ lineKey.beginIndex - 1 ]);
-		Vector3 endVertex = TransformHelper::TransformViewport(m_arrayTransform, m_trasnformVertex[ lineKey.endIndex - 1 ]);
+		if ( m_pMesh->GetType() == PLY )
+		{
+			beginVertex = TransformHelper::TransformViewport(m_arrayTransform, m_trasnformVertex[lineKey.beginIndex - 1]);
+			endVertex = TransformHelper::TransformViewport(m_arrayTransform, m_trasnformVertex[lineKey.endIndex - 1]);
+		}
+		else if (m_pMesh->GetType() == MSH)
+		{
+			beginVertex = m_trasnformVertex[lineKey.beginIndex - 1];
+			endVertex = m_trasnformVertex[lineKey.endIndex - 1];
+		}
 
 		beginVertex.x = floor(beginVertex.x);
 		beginVertex.y = floor(beginVertex.y);

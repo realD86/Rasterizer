@@ -417,7 +417,7 @@ static void LoadModuleCoolD()
 	g_ModuleContext.InstallFunctionCreateCamera("coold_CreateCamera");
 	g_ModuleContext.InstallFunctionUpdateCamera("coold_UpdateCamera");
 
-	float eye[3] = { 1.5f, 3.0f, -15.0f };
+	float eye[3] = { 1.5f, 3.0f, -10.0f };
 	float lookat[3] = { 0.0f, 0.0f, 0.0f };
 	float up[3] = { 0.0f, 1.0f, 0.0f };
 

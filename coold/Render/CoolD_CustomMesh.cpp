@@ -54,6 +54,9 @@ namespace CoolD
 
 	Dbool CustomMeshMSH::Load(const Dchar* filename)
 	{		
+		m_vecVertex.clear();
+		m_vecFace.clear();
+
 		Dint vectexCount = 0;
 		Dint faceCount = 0;
 
@@ -64,7 +67,7 @@ namespace CoolD
 		string strBuffer(vector<char>(begin, end).data());
 		stringstream sstream(strBuffer);
 
-		while( !sstream.eof() )
+		while( true )
 		{
 			string strToken;
 			sstream >> strToken;
@@ -124,6 +127,11 @@ namespace CoolD
 
 				m_vecFace.emplace_back(f);
 			}
+
+			if ((m_vecVertex.size() == (unsigned)vectexCount && m_vecFace.size() == (unsigned)faceCount))
+			{
+				break;
+			}
 		}
 		return true;
 	}			
@@ -146,6 +154,9 @@ namespace CoolD
 
 	Dbool CustomMeshPLY::Load(const Dchar* filename)
 	{		
+		m_vecVertex.clear();
+		m_vecFace.clear();
+
 		Dint vectexCount = 0;
 		Dint faceCount = 0;
 
@@ -156,9 +167,10 @@ namespace CoolD
 		string strBuffer(vector<char>(begin, end).data());
 		stringstream sstream(strBuffer);
 
-		while( !sstream.eof() )
+		//while (!sstream.eof())
+		while ( true )
 		{
-			string strToken;
+			string strToken = "";
 			sstream >> strToken;
 
 			if( strToken == "#$Vertices" )
@@ -173,19 +185,19 @@ namespace CoolD
 			}
 			else if( strToken == "Vertex" )
 			{
-				Dint vertexNum;
+				Dint vertexNum = 0;
 				sstream >> vertexNum;
 				
 				assert(0 < vertexNum && vertexNum <= vectexCount);	//지정된 형식과 다를경우 kill
 
-				Vector3 v;
+				Vector3 v = {0,0,0};
 				sstream >> v.x >> v.y >> v.z;			
 
 				m_vecVertex.emplace_back(v);
 			}
 			else if( strToken == "Face" )
 			{
-				Dint faceNum;
+				Dint faceNum = 0;
 				sstream >> faceNum;
 
 				assert(0 < faceNum && faceNum <= faceCount);
@@ -196,7 +208,7 @@ namespace CoolD
 				
 				for( Dint i = 0; i < 3; ++i )
 				{
-					Dint vertexNum;
+					Dint vertexNum = 0;
 					sstream >> vertexNum;
 
 					assert(0 < vertexNum && vertexNum <= vectexCount);
@@ -204,6 +216,11 @@ namespace CoolD
 				}
 
 				m_vecFace.emplace_back(f);
+			}	
+
+			if ((m_vecVertex.size() == (unsigned)vectexCount && m_vecFace.size() == (unsigned)faceCount))
+			{
+				break;
 			}
 		}
 		return true;

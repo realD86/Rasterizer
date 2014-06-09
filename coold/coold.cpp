@@ -24,8 +24,10 @@ Matrix44 g_matWorld;
 Matrix44 g_matView;
 Matrix44 g_matPers;
 
-Dint g_gridCount = 1;
-Dbool g_threadUse = false;
+atomic<int> g_sGridCount(1);
+atomic<int> g_sGridChangeCount(1);
+atomic<bool> g_sThreadUse(false);
+atomic<int> g_sThreadCount(0);
 
 //Dbool WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID fImpLoad)
 //{
@@ -56,7 +58,7 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_LoadMeshFromFile( const Dchar* filename 
 	GETSINGLE(MeshManager).LoadMesh(filename);
 
 	//쓰레드 테스트를 위한 추가 로직----------------------------------	
-	for (Dint i = 0; i < g_gridCount * g_gridCount - 1; ++i)
+	for (Dint i = 0; i < g_sGridCount.load() * g_sGridCount.load() - 1; ++i)
 	{
 		CustomMesh* pMesh = GETSINGLE(MeshManager).GetMesh(filename);
 		if (CustomMeshPLY* pPlyMesh = dynamic_cast<CustomMeshPLY*>(pMesh))
@@ -78,40 +80,50 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width
 	g_renderModule->SetTransform(VIEW, g_matView);
 	g_renderModule->SetTransform(PERSPECTIVE, g_matPers);
 	g_renderModule->SetTransform(VIEWPORT, TransformHelper::CreateViewport(0, 0, width, height));
-		
+
 	int sequence = 0;
 	for (auto& Mesh : GETSINGLE(MeshManager).GetMapMesh())
 	{
-		if( g_threadUse )
+		if (g_sThreadUse.load())
 		{
-			if (g_gridCount > 1)
+			if (g_sGridCount.load() > 1)
 			{
-				g_renderModule->AdjustGridWorld(g_gridCount, sequence++);
+				g_renderModule->AdjustGridWorld(g_sGridCount.load(), sequence++);
 			}
-			RenderInfoParam param( g_renderModule, Mesh.second );
+
+			RenderInfoParam param(g_renderModule, Mesh.second);
 			g_pThreadManager->AssignWork(&param);
+			Sleep(0);
 		}
 		else
 		{
-			if (g_gridCount > 1)
+			if (g_sGridCount.load() > 1)
 			{
-				g_renderModule->AdjustGridWorld(g_gridCount, sequence++);
+				g_renderModule->AdjustGridWorld(g_sGridCount.load(), sequence++);
 			}
 			g_renderModule->RenderBegin(Mesh.second);
 			g_renderModule->RenderEnd();
 		}
 	}
-	
+
 	g_pThreadManager->WaitAllThreadWorking();
+	
 
 	//───────────────────────────────────────────────────────────────────────────────────
 	//이 부분은 시리얼하기 때문에 메쉬를 삭제, 생성해도 동작에 무리가 없다.
-	if (g_gridCount * g_gridCount != (signed)GETSINGLE(MeshManager).GetMapMesh().size())
-	{
+	if (g_sGridChangeCount.load() * g_sGridChangeCount.load() != (signed)GETSINGLE(MeshManager).GetMapMesh().size())
+	{		
+		atomic_exchange(&g_sGridCount, g_sGridChangeCount.load());
 		string strFileName((*GETSINGLE(MeshManager).GetMapMesh().begin()).first);
-		coold_LoadMeshFromFile(strFileName.c_str());
+		coold_LoadMeshFromFile(strFileName.c_str());		
 	}
 	//───────────────────────────────────────────────────────────────────────────────────
+
+	if ( g_sThreadCount.load() != 0 )
+	{
+		g_pThreadManager->ResetThreads( g_sThreadCount.load() );
+		atomic_exchange(&g_sThreadCount, 0);
+	}
 }
 
 static VariableCommand cc_x_move("cc_x_move", "0");
@@ -202,7 +214,7 @@ static FunctionCommand fc_bsculltype("fc_bsculltype", [] (initializer_list<strin
 
 static FunctionCommand fc_thread_count("fc_thread_count", [](initializer_list<string> strs)
 {
-	GETSINGLE(ThreadManager).ResetThreads( stoi(*strs.begin()) );
+	atomic_exchange(&g_sThreadCount, stoi(*strs.begin()));	
 });
 
 static FunctionCommand fc_thread_use("fc_thread_use", [] (initializer_list<string> strs)
@@ -216,10 +228,10 @@ static FunctionCommand fc_thread_use("fc_thread_use", [] (initializer_list<strin
 		else
 			isUse = false;
 
-		if( g_threadUse != isUse )
+		if (g_sThreadUse.load() != isUse)
 		{
 			GETSINGLE(ThreadManager).ResetThreads(0);
-			g_threadUse = isUse;
+			atomic_exchange(&g_sThreadUse, isUse);			
 		}		
 	}
 });
@@ -227,13 +239,13 @@ static FunctionCommand fc_thread_use("fc_thread_use", [] (initializer_list<strin
 static FunctionCommand fc_change_grid("fc_change_grid", [](initializer_list<string> strs)
 {
 	if (strs.size() == 1)
-	{		
-		g_gridCount = stoi(*strs.begin());
+	{			
+		atomic_exchange(&g_sGridChangeCount, stoi(*strs.begin()));
 
 		VariableCommand* pZf = dynamic_cast<VariableCommand*>( GETSINGLE(ConsoleManager).FindCommand("cc_adjust_zf") );
-		pZf->SetValue( g_gridCount * 8.0f );
+		pZf->SetValue(g_sGridChangeCount.load() * 8.0f);
 
 		VariableCommand* pZeye = dynamic_cast<VariableCommand*>(GETSINGLE(ConsoleManager).FindCommand("cc_z_eye"));
-		pZeye->SetValue( -(g_gridCount * 8.0f) );		
+		pZeye->SetValue(-(g_sGridChangeCount.load() * 8.0f));
 	}
 });

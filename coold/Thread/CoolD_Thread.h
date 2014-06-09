@@ -51,8 +51,6 @@ namespace CoolD
 
 		Dvoid	ReleaseHandles();
 		HANDLE	GetThreadHandle() const;
-		Dvoid	SetIsFree(Dbool isFree);
-		Dbool	GetIsFree();
 		Dvoid	SetWorkInfo(RenderInfoParam* pParam);
 
 	private:
@@ -60,13 +58,13 @@ namespace CoolD
 				
 	protected:
 		HANDLE	m_handleThread;	
-		Dbool	m_isFree;	
 		Duint	m_threadID;
 		array<HANDLE, TYPECOUNT> m_arrHandleWorkEvent;
 
 	private:
 		RenderModule	m_renderer;
-		CustomMesh*		m_pMesh;		
+		CustomMesh*		m_pMesh;	
+		volatile unsigned int m_sRenderingLock;
 	};
 };
 

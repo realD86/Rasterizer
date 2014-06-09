@@ -10,8 +10,9 @@ namespace CoolD
 		m_vLook = vLook;
 		m_fAngle = fAngle;		
 		m_fNear = 1.0f;
-		m_fFar = 50.0f;
+		m_fFar = 30.0f;
 		m_fAspect = aspect;
+		m_bMove = false;
 
 		m_fMoveSpeed = 40.f;
 		m_fMouseSens = 0.3f;	
@@ -21,6 +22,10 @@ namespace CoolD
 		m_vMoveDir = { 0, 0, 0 };		
 		m_MouseMoveInterval = { 0, 0 };
 
+		m_matCam[CM_VIEW].Identity();
+		m_matCam[CM_PROJ].Identity();
+		m_vDir[CD_FRONT].Clean();
+		m_vDir[CD_RIGHT].Clean();
 		m_vDir[CD_UP] = Vector3(0, 1, 0);
 
 		DirectionVectorInit();

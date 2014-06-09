@@ -15,6 +15,7 @@
 #include <string>
 #include <initializer_list>
 #include <thread>
+#include <atomic>
 
 typedef void	Dvoid;
 typedef bool	Dbool;

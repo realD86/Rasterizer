@@ -2,12 +2,14 @@
 *.tlog
 *.log
 *.dll
+!rasterizer/glut32.dll
+*.lib
+!rasterizer/glut32.lib
 *.exp
 *.ilk
 *.idb
 *.pdb
 *.pch
-*.lib
 *.opensdf
 *.sdf
 *.exe

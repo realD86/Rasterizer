@@ -93,7 +93,6 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width
 
 			RenderInfoParam param(g_renderModule, Mesh.second);
 			g_pThreadManager->AssignWork(&param);
-			Sleep(0);
 		}
 		else
 		{

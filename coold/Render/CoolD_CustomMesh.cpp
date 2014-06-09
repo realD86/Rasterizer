@@ -67,7 +67,8 @@ namespace CoolD
 		string strBuffer(vector<char>(begin, end).data());
 		stringstream sstream(strBuffer);
 
-		while( true )
+		Dbool isLoop = true;
+		while( isLoop )
 		{
 			string strToken;
 			sstream >> strToken;
@@ -130,7 +131,7 @@ namespace CoolD
 
 			if ((m_vecVertex.size() == (unsigned)vectexCount && m_vecFace.size() == (unsigned)faceCount))
 			{
-				break;
+				isLoop = false;
 			}
 		}
 		return true;
@@ -167,8 +168,8 @@ namespace CoolD
 		string strBuffer(vector<char>(begin, end).data());
 		stringstream sstream(strBuffer);
 
-		//while (!sstream.eof())
-		while ( true )
+		Dbool isLoop = true;
+		while (isLoop)
 		{
 			string strToken = "";
 			sstream >> strToken;
@@ -220,7 +221,7 @@ namespace CoolD
 
 			if ((m_vecVertex.size() == (unsigned)vectexCount && m_vecFace.size() == (unsigned)faceCount))
 			{
-				break;
+				isLoop = false;
 			}
 		}
 		return true;

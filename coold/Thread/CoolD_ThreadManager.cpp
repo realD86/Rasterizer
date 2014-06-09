@@ -50,7 +50,7 @@ namespace CoolD
 					return;
 				}
 			}	
-			//Sleep(0);
+			Sleep(0);
 		}
 	}	
 	
@@ -72,7 +72,7 @@ namespace CoolD
 					break;
 				}				
 			}
-			//Sleep(0);
+			Sleep(0);
 		}
 	}
 

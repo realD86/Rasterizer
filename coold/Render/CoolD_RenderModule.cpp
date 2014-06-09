@@ -478,8 +478,8 @@ namespace CoolD
 		lineKey.beginIndex = face.vecIndex[ firstIndex ];
 		lineKey.endIndex = face.vecIndex[ secondIndex ];
 		
-		Vector3 beginVertex;
-		Vector3 endVertex;
+		Vector3 beginVertex = { 0, 0, 0 };
+		Vector3 endVertex = { 0, 0, 0 };
 
 		if ( m_pMesh->GetType() == PLY )
 		{

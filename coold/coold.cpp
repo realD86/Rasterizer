@@ -70,9 +70,7 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_LoadMeshFromFile( const Dchar* filename 
 	//-----------------------------------------------------------
 }
 
-
-ThreadManager* g_pThreadManager = &GETSINGLE(ThreadManager);
-EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width, Dint height, Dint bpp)
+Dvoid RenderModuleInit(Dvoid* buffer, Dint width, Dint height)
 {
 	g_renderModule->SetScreenInfo(buffer, width, height);
 	g_renderModule->ClearColorBuffer(BLACK);
@@ -80,11 +78,45 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width
 	g_renderModule->SetTransform(VIEW, g_matView);
 	g_renderModule->SetTransform(PERSPECTIVE, g_matPers);
 	g_renderModule->SetTransform(VIEWPORT, TransformHelper::CreateViewport(0, 0, width, height));
+}
+
+ThreadManager* g_pThreadManager = &GETSINGLE(ThreadManager);
+MeshManager* g_pMeshManager = &GETSINGLE(MeshManager);
+Dvoid SerializeTask( Dbool threadUse )
+{	
+	if (g_sGridChangeCount.load() * g_sGridChangeCount.load() != (signed)g_pMeshManager->GetMapMesh().size())
+	{
+		atomic_exchange(&g_sGridCount, g_sGridChangeCount.load());
+		string strFileName( (*g_pMeshManager->GetMapMesh().begin()).first);
+		coold_LoadMeshFromFile(strFileName.c_str());
+	}
+	
+	if (threadUse != g_sThreadUse.load())
+	{
+		g_pThreadManager->CleanThreads();
+
+		if (g_sThreadUse.load())
+		{	//쓰레드 사용시에만 초기화
+			g_pThreadManager->Initialize(0);
+		}
+	}
+
+	if (g_sThreadCount.load() != 0)
+	{
+		g_pThreadManager->ResetThreads(g_sThreadCount.load());
+		atomic_exchange(&g_sThreadCount, 0);
+	}
+}
+
+EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width, Dint height, Dint bpp)
+{
+	RenderModuleInit(buffer, width, height);
 
 	int sequence = 0;
+	bool threadUse = g_sThreadUse.load();
 	for (auto& Mesh : GETSINGLE(MeshManager).GetMapMesh())
 	{
-		if (g_sThreadUse.load())
+		if ( threadUse )
 		{
 			if (g_sGridCount.load() > 1)
 			{
@@ -105,24 +137,14 @@ EXTERN_FORM DLL_API Dvoid __cdecl coold_RenderToBuffer(Dvoid* buffer, Dint width
 		}
 	}
 
-	g_pThreadManager->WaitAllThreadWorking();
+	if ( threadUse )
+		g_pThreadManager->WaitAllThreadWorking();
 	
-
 	//───────────────────────────────────────────────────────────────────────────────────
-	//이 부분은 시리얼하기 때문에 메쉬를 삭제, 생성해도 동작에 무리가 없다.
-	if (g_sGridChangeCount.load() * g_sGridChangeCount.load() != (signed)GETSINGLE(MeshManager).GetMapMesh().size())
-	{		
-		atomic_exchange(&g_sGridCount, g_sGridChangeCount.load());
-		string strFileName((*GETSINGLE(MeshManager).GetMapMesh().begin()).first);
-		coold_LoadMeshFromFile(strFileName.c_str());		
-	}
+	//이 부분은 시리얼 동작한다.
+	SerializeTask(threadUse);	
 	//───────────────────────────────────────────────────────────────────────────────────
 
-	if ( g_sThreadCount.load() != 0 )
-	{
-		g_pThreadManager->ResetThreads( g_sThreadCount.load() );
-		atomic_exchange(&g_sThreadCount, 0);
-	}
 }
 
 static VariableCommand cc_x_move("cc_x_move", "0");
@@ -220,16 +242,10 @@ static FunctionCommand fc_thread_use("fc_thread_use", [] (initializer_list<strin
 {
 	if( strs.size() == 1 )
 	{
-		Dbool isUse;
-
-		if( stoi(*strs.begin()) != 0 )
-			isUse = true;
-		else
-			isUse = false;
+		Dbool isUse = ( stoi(*strs.begin()) == 1 )? true:false;
 
 		if (g_sThreadUse.load() != isUse)
-		{
-			GETSINGLE(ThreadManager).ResetThreads(0);
+		{			
 			atomic_exchange(&g_sThreadUse, isUse);			
 		}		
 	}

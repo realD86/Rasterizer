@@ -81,13 +81,13 @@ Dvoid RenderModuleInit(Dvoid* buffer, Dint width, Dint height)
 }
 
 ThreadManager* g_pThreadManager = &GETSINGLE(ThreadManager);
-MeshManager* g_pMeshManager = &GETSINGLE(MeshManager);
+
 Dvoid SerializeTask( Dbool threadUse )
 {	
-	if (g_sGridChangeCount.load() * g_sGridChangeCount.load() != (signed)g_pMeshManager->GetMapMesh().size())
+	if (g_sGridChangeCount.load() * g_sGridChangeCount.load() != (signed)GETSINGLE(MeshManager).GetMapMesh().size())
 	{
 		atomic_exchange(&g_sGridCount, g_sGridChangeCount.load());
-		string strFileName( (*g_pMeshManager->GetMapMesh().begin()).first);
+		string strFileName( (*GETSINGLE(MeshManager).GetMapMesh().begin()).first );
 		coold_LoadMeshFromFile(strFileName.c_str());
 	}
 	
